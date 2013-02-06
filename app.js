@@ -1,5 +1,5 @@
-var express = require('express');
-var app = express(),
+var express = require('express'), 
+    app = express(),
     path = require('path'),
     convert = require('./routes/convert');
 
@@ -10,10 +10,20 @@ app.configure(function () {
     app.use(express.static(path.join(__dirname, 'components'))); 
 });
 
+var server = require('http').createServer(app),
+    io = require('socket.io').listen(server);
+
 app.get('/robots.txt', function(req, res){
     res.send('User-agent: *');
     res.send('Disallow: /');
 });
+    
+io.sockets.on('connection', function (socket) {
+    socket.emit('welcome', { message : 'Connected to Socket.' });
+    socket.on('my other event', function (data) {
+        console.log(data);
+    });
+});
 
-app.listen(3000);
+server.listen(3000);
 console.log('Listening on port 3000');
