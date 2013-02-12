@@ -12,7 +12,7 @@ io.sockets.on('connection', function (socket) {
 
     // via http://net.tutsplus.com/tutorials/javascript-ajax/how-to-create-a-resumable-video-uploade-in-node-js/
     var files = {};
-    socket.on('start', function (data){ 
+    socket.on('start', function (data){
         var name = data.name;
         files[name] = { 
            filesize : data.size,
@@ -77,7 +77,7 @@ io.sockets.on('connection', function (socket) {
 
         fs.watch(path, function(e, f){
             if (e == "rename") {
-                console.log(f);
+                console.log('Added ' + f);
                 convert(path, f, output);
             }
         });
