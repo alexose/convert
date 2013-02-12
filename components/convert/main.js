@@ -1,6 +1,4 @@
 $(document).ready(function(){
-    console.log('here we go!');
-    
     var o = {
         name    : 'convert',
         element : $('#convert-wrapper'),
@@ -32,7 +30,6 @@ Convert = function(o){
 
 // Begin upload process
 Convert.prototype.begin = function(){
-
     // Append uploader to screen
     var tmpl = ''+
             '<form>' +
@@ -45,13 +42,11 @@ Convert.prototype.begin = function(){
                 '<button id="{{name}}-submit" type="submit" class="btn btn=primary">Upload!</button>' +
             '</div>' +
             '</fieldset>' +
-            '</form>' +         
-            '<div id="{{name}}-progress"><div id="{{name}}-progressbar"></div></div><span id="{{name}}-percent">0%</span>' +
-            '<span id="{{name}}-uploaded"> - <span id="{{name}}-total">0</span></span>';
+            '</form>';         
 
-    var html = (Handlebars.compile(tmpl))({ name : this.o.name })
-    
-    var element = $(html).appendTo(this.element);
+    var html = (Handlebars.compile(tmpl))({ name : this.o.name }),
+        element = $(html).appendTo(this.element);
+        bar = new Convert.ProgressBar(this.o.name, this.element);
 
     element.find('#' + this.o.name + '-submit')
         .click($.proxy(function(evt){
@@ -76,9 +71,9 @@ Convert.prototype.begin = function(){
             this.file = evt.target.files[0];
         }, this));
 
-
     this.socket.on('more', $.proxy(function(data){
-        console.log(data);
+        // Update status bar
+        bar.update(data.percent);
 
         var place = data['place'] * 524288, // Next starting position 
             min = Math.min(524288, (this.file.size - place)),
@@ -86,11 +81,53 @@ Convert.prototype.begin = function(){
 
         // We'd better be webkit or mozilla!
         newFile = this.file.slice(place, place + min); 
- 
         this.reader.readAsBinaryString(newFile);
+    
     }, this));
 
     this.socket.on('finished', $.proxy(function(data){
-        console.log('all done.');
+        // Update status bar
+        bar.update(data.percent);
+           
+        // Prepare to recieve results from the server
+        var viewer = new Convert.Viewer(this.o.name, this.element, this.socket);
     }, this));
+};
+
+// View, edit, and submit results
+Convert.Viewer  = function(name, element, socket){
+    var self = this;
+    this.results = $('<ul />').addClass('results').appendTo(element);
+    
+    socket.on('results', function(data){ self.update(data) });
+    return this;
+}
+
+Convert.Viewer.prototype.update = function(data){
+    for (var i in data.pages){
+        var page = data.pages[i],
+            element = $('<li />').text(page.text).appendTo(this.results);
+    }
+}
+
+
+Convert.ProgressBar = function(name, element){
+    this.bar  = $('<div />')
+        .attr('id', name + "-bar")
+        .addClass('bar');
+    this.percent = $('<div />')
+        .attr('id', name + "-percent")
+        .addClass('percent');
+
+    this.container = $('<div />')
+        .append([this.bar, this.percent])
+        .addClass('progressbar')
+        .appendTo(element);
+    
+    return this;
+}
+
+Convert.ProgressBar.prototype.update = function(percentage){
+    this.bar.width(percentage * 5);
+    this.percent.text(Math.round(percentage) + '%');
 }
