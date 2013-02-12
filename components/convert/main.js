@@ -2,7 +2,7 @@ $(document).ready(function(){
     var options = {
         name    : 'convert',
         element : $('#convert-wrapper'),
-        host    : '192.168.1.106'
+        host    : 'localhost'
     };
 
     // options  = $.extend(inline_options, options);
