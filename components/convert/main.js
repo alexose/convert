@@ -94,17 +94,19 @@ Convert.prototype.begin = function(){
 // View, edit, and submit results
 Convert.Viewer  = function(name, element, socket){
     var self = this;
+    this.count = 0;
     this.results = $('<ul />').addClass('results').appendTo(element);
     
     socket.on('results', function(data){ self.update(data); });
     return this;
 };
 
-Convert.Viewer.prototype.update = function(data){
-    for (var i in data.pages){
-        var page = data.pages[i],
-            element = $('<li />').text(page.text).appendTo(this.results);
-    }
+Convert.Viewer.prototype.update = function(page){
+    if (this.count % 3 === 0)
+        this.row = $('<div />').addClass('row-fluid').appendTo(this.results);
+    
+    var element = $('<div />').addClass('span4 well').text(page.text).appendTo(this.row);
+    this.count++;
 };
 
 Convert.ProgressBar = function(name, element){

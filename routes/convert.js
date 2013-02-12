@@ -52,7 +52,7 @@ io.sockets.on('connection', function (socket) {
         
         var place = file.downloaded / 524288,
             percent = (file.downloaded / file.filesize) * 100;
-       
+      
         // If file is fully uploaded
         if (file.downloaded == file.filesize){
             fs.write(file.handler, file.data, null, 'binary', function(err, writen){
@@ -70,22 +70,42 @@ io.sockets.on('connection', function (socket) {
      });
 
     function startConverting(name){
+        function rmDir(dirPath) {
+            var files;
+            try { 
+                files = fs.readdirSync(dirPath); 
+            } catch(e) { return; }
+
+            if (files.length > 0){
+               for (var i = 0; i < files.length; i++) {
+                  var filePath = dirPath + '/' + files[i];
+                  if (fs.statSync(filePath).isFile())
+                     fs.unlinkSync(filePath);
+                  else
+                     rmDir(filePath);
+               }
+            }
+            fs.rmdirSync(dirPath);
+        }
+        
         var path = 'files/' + name + '-images',
             output= 'files/' + name + '-text';
-        fs.mkdir(path);
-        fs.mkdir(output);
+        rmDir(path);
+        rmDir(output);
+        fs.mkdirSync(path);
+        fs.mkdirSync(output);
 
         fs.watch(path, function(e, f){
             if (e == "rename") {
-                console.log('Added ' + f);
-                convert(path, f, output);
+                socket.emit('status', { text : 'Added ' + f});
+                enqueue(path, f, output);
             }
         });
         
         fs.watch(output, function(e, f){
-            if (e == "rename") {
-                console.log('yeah' + f);
-                var text = readFile(output + '/' + f);
+            console.log(e); 
+            if (e == "change") {
+                var text = fs.readFileSync(output + '/' + f, 'utf8');
                 socket.emit('results', { text : text });
             }
         });
@@ -115,9 +135,30 @@ io.sockets.on('connection', function (socket) {
         }); 
     }
 
+    var queue = [],
+        running = false;
+
     // Convert file to text using tesseract
-    function convert(path, file, destination){
-        exec("/usr/bin/tesseract " + path + "/" + file + " " + destination + "/" + file); 
+    function enqueue(path, file, destination){
+        var command = "/usr/bin/tesseract " + path + "/" + file + " " + destination + "/" + file;
+        queue.push(command);
+        if (!running) run();
+    }
+
+    function run(error, stdout, stderr){
+        if (error) console.log(error);
+        if (stdout) console.log(stdout);
+        if (stderr) console.log(stderr);
+
+        running = true;
+        if (queue.length > 0){
+            var command = queue.shift();
+            console.log('processing ' + command);
+            exec(command, run); 
+        } else {
+            console.log('Nothing in queue');
+            running = false;
+        }
     }
 
 });
