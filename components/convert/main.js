@@ -2,7 +2,7 @@ $(document).ready(function(){
     var o = {
         name    : 'convert',
         element : $('#convert-wrapper'),
-        host    : 'http://gibson.local'
+        host    : ''
     }
 
     var convert = new Convert(o);
