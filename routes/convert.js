@@ -124,7 +124,7 @@ io.sockets.on('connection', function (socket) {
 
     // Splits pdf into pngs 
     function split(name){
-        exec("/usr/bin/gs -dQUIET -dPARANOIDSAFER -dBATCH -dNOPAUSE -dNOPROMPT -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r72 -sOutputFile=files/"+name+"-images/%03d.png files/"+name, function (error, stdout, stderr) {
+        exec("/usr/bin/gs -dQUIET -dPARANOIDSAFER -dBATCH -dNOPAUSE -dNOPROMPT -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r300 -sOutputFile=files/"+name+"-images/%03d.png files/"+name, function (error, stdout, stderr) {
             if ( error !== null ) {
                 console.log(error);
             }
