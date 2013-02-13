@@ -97,8 +97,10 @@ io.sockets.on('connection', function (socket) {
 
         fs.watch(path, function(e, f){
             if (e == "rename") {
-                socket.emit('status', { text : 'Added ' + f});
-                enqueue(path, f, output);
+                setTimeout(function(){
+                    socket.emit('status', { text : 'Added ' + f});
+                    enqueue(path, f, output);
+                }, 5000);
             }
         });
         
